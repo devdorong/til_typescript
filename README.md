@@ -21,9 +21,22 @@ const num_7: number = NaN;
 const str_1 = "안녕";
 const str_2: string = "반가워";
 let str_3: string = "김밥";
+const str_4: string = `백틱`;
 ```
 
 ## 3. boolean 타입
+
+- 프로그래밍에서 false 처럼 사용되는 값(falshy 한 값)
+- 아래의 경우는 falshy 하다고 판단하여 false 로 인정
+
+```txt
+flase
+""        비어있는 문자열은 if 문 등에서 사용할때 false 로 판단.
+0         숫자 0은 if 문 등에서 사용할때 false 로 판단.
+null      if 문 등에서 사용할때 false 로 판단.
+undefined if 문 등에서 사용할때 false 로 판단.
+Nan       if 문 등에서 사용할때 false 로 판단.
+```
 
 ```ts
 const bool_1 = false;
@@ -44,6 +57,8 @@ let n_2: null = null;
 ## 5. undefined 타입
 
 - 프로그램이 초기값으로 세팅함
+- 값이 없다. 즉, 정의가 안되어 있다.
+
 
 ```ts
 let user: undefined = undefined;
@@ -81,7 +96,7 @@ let b: "안녕" = "안녕";
 let c: true = true;
 ```
 
-## 8. 정말 중복되지 않는 유일한 값
+## 8. `정말 중복되지 않는 유일한 값`
 
 ```ts
 const sy = Symbol("age");
@@ -381,7 +396,7 @@ ex ) let user-name
 
 - 상수(const Case) 명명법
 
-```txt 
+```txt
 1. 전체가 대문자 입니다.
 2. 상수라고 해서 변하지 않는 값이라고 유추합니다.
 
