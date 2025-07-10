@@ -1,108 +1,257 @@
-# type 과 interface 비교
+# Generic
 
-## 1. 가장 큰 차이
+- `타입을 나중에 결정한다.`
+- 제네릭을 `타입 변수` 라고 정리하자.
+- 일반적인 변수는 값이 바뀌지만
+- 제네릭은 값이 아니고 `변수의 종류를 변경`한다.
 
-- type : 객체, 기본형, 배열 등 모두 정의가능
-- interface : 객체만 대상으로 정의 가능
+## 1. 문제 상황 살펴보기
 
-## 2. 객체 구조 정의 비교
-
-```ts
-interface IPerson {
-  name: string;
-  age: number;
-}
-
-type PersonType = {
-  name: string;
-  age: number;
-};
-```
-
-## 3. 확장 방식의 차이
-
-- interface : `extends`
-- type : `&`
+- 매개변수의 `종류만 다르고` 기능은 같더라
+- 아래 코드를 자주 보게 되더라.
 
 ```ts
-interface IAnimal {
-  name: string;
+function showNumber(a: number): void {
+  console.log(a);
 }
-// 확장
-interface IDog extends IAnimal {
-  bark(): void;
+showNumber(100);
+
+function showString(a: string): void {
+  console.log(a);
 }
-//=============================
-type AnimalType = {
-  name: string;
-};
-// 병합
-type DogType = AnimalType & {
-  bark(): void;
-};
+showString("안녕");
 ```
 
-## 4. interfaace 만 가능함.
-
-- interface 를 동일한 이름으로 재정의
+- 매개변수의 종류를 `any` 로 하면 되겠네?
+- 두 함수를 하나로 정리하는 것이 좋겠다.
 
 ```ts
-interface Dog {
-  name: string;
-}
-interface Dog {
-  age: number;
-}
-interface Dog {
-  bark(): void;
+function showArg(a: any): void {
+  console.log(a);
 }
 
-const a: Dog = {
-  name: "댕댕이",
-  age: 10,
-  bark: () => console.log("멍"),
-};
-// type 은 안됨
-type DogType = {};
-type DogType = {};
-type DogType = {};
+showArg(0);
+showArg("안녕");
 ```
 
-## 5. type 만 가능함.
-
-- 유니온(`|`) 문법
-- 배열(`[]`) (튜플)
+- 위 처럼 any 작업을 했더니 추가적인 기능이 필요하게 되었다.
+- `any` 는 서비스 실행 중 오류 발생함.
+- 즉 코딩 중 오류 확인 어려움. 예측 불가
 
 ```ts
-// 유니언 문법
-type Dir = "UP" | "DOWN" | "LEFT" | "RIGHT";
-type Result = string | number | boolean;
-// 배열 (튜플)
-type Point = [number, number];
+function showArgA(a: any): void {
+  console.log(a);
+  console.log(a.length);
+}
+
+showArgA(0); // 실행 중에 오류발생(야근당첨)
+showArgA("안녕"); // 정상작동
 ```
 
-## 6. 클래스에서 implements 는 `interface 권장`
+## 2. 문제 상황을 Generic 으로 해결해 보기
 
 ```ts
-interface 약속 {
-  name: string;
+// T 를 무엇으로 생각하시면 좋으냐면 타입변수
+function showArgGeneric<T>(a: T): void {
+  console.log(a);
 }
-class Person implements 약속 {
-  name: string;
-}
-// 아래도 가능함. 하지만?
-type 약속타입 = {
-  name: string;
-};
-class Dog implements 약속타입 {
-  name: string;
-}
+
+showArgGeneric(0);
+showArgGeneric("안녕");
 ```
 
-## 7. 일반적 기준
+- 아래의 코드는 아직도 오류로 처리됩니다.
+- 하지만, 실행중 오류가 아니고, 코딩 중 오류를 표현합니다.
 
-- 객체 모양을 정의하는 경우 : interface 권장
-- 여러 명이 작업을 한다면(협업) : interface 권장
-- 외부라이브러리는 일반적으로 interface 로 작성되어짐.
-- 여러 타입을 조합한다(유니언 등) : type 권장
-- 복잡한 타입(속성에 함수, 유니언) : type 권장
+```ts
+// T 를 무엇으로 생각하시면 좋으냐면 타입변수
+function showArgGeneric<T>(a: T): void {
+  console.log(a);
+
+  // 아래의 문제는 타입 좁히기로 해결이 가능하다.
+  // 타입 가드 라고 합니다.
+  console.log(a.length);
+}
+
+showArgGeneric(0);
+showArgGeneric("안녕");
+```
+
+- 우선 해결코드를 진행하고, 다시 문법 보자.
+
+```ts
+// T 를 무엇으로 생각하시면 좋으냐면 타입변수 즉, 타입이 변하는 변수
+const showArgGeneric = <T>(a: T): void => {
+  console.log(a);
+  // console.log(a.length); // 아래에서 if 로 오류 처리 진행
+
+  // 타입 좁히기
+  if ((a as any).length !== undefined) {
+    console.log((a as any).length);
+  } else {
+    console.log("length 속성이 없습니다.");
+  }
+};
+
+showArgGeneric(0); // 실행 중에 오류발생(야근당첨)
+showArgGeneric("100"); // 정상작동
+```
+
+## 3. 다양한 예제
+
+```ts
+// 배열의 요소를 출력하는 함수
+// 그런데 배열의 요소의 타입을 제네릭으로 구현
+
+const showItems = (
+  arr: (
+    | string
+    | number
+    | boolean
+    | { age: number }
+    | { age: number; name: string }
+  )[]
+) => {
+  arr.forEach((item, index) => {
+    console.log(`${index} 번째 item 은 ${item} 입니다.`);
+  });
+};
+
+showItems(["a", "b", "c"]);
+showItems([1, 2, 3, 4]);
+showItems([true, false, true, false]);
+showItems([{ age: 1 }, { age: 2 }, { age: 3 }]);
+showItems([
+  { age: 1, name: "hong" },
+  { age: 2, name: "kim" },
+  { age: 3, name: "park" },
+]);
+```
+
+- 제네릭 활용 코드
+
+```ts
+// 배열의 요소를 출력하는 함수
+// 그런데 배열의 요소의 타입을 제네릭으로 구현
+
+const showItems = <T>(arr: T[]) => {
+  arr.forEach((item, index) => {
+    console.log(`${index} 번째 item 은 ${item} 입니다.`);
+  });
+};
+
+showItems(["a", "b", "c"]);
+showItems([1, 2, 3, 4]);
+showItems([true, false, true, false]);
+showItems([{ age: 1 }, { age: 2 }, { age: 3 }]);
+showItems([
+  { age: 1, name: "hong" },
+  { age: 2, name: "kim" },
+  { age: 3, name: "park" },
+]);
+```
+
+- 예제 2
+
+```ts
+// 복사를 하는 함수
+const copyValue = (
+  a: number | string | boolean | { a: number } | (number | string)[]
+) => {
+  return a;
+};
+
+const result_1 = copyValue(1);
+const result_2 = copyValue("hello");
+const result_3 = copyValue(true);
+const result_4 = copyValue({ a: 1 });
+const result_5 = copyValue([1, 2, 3]);
+const result_6 = copyValue(["a", "b", "c"]);
+```
+
+- 상당히 위험 (서비스 도중 에러가 나서 복구힘듬)
+
+```ts
+// 복사를 하는 함수
+const copyValue = (a: any): any => {
+  return a;
+};
+
+const result_1 = copyValue(1);
+const result_2 = copyValue("hello");
+const result_3 = copyValue(true);
+const result_4 = copyValue({ a: 1 });
+const result_5 = copyValue([1, 2, 3]);
+const result_6 = copyValue(["a", "b", "c"]);
+```
+
+- 예제 2 제네릭 활용
+
+```ts
+// 복사를 하는 함수
+const copyValue = <T>(a: T): T => {
+  return a;
+};
+
+const result_1 = copyValue(1);
+const result_2 = copyValue("hello");
+const result_3 = copyValue(true);
+const result_4 = copyValue({ a: 1 });
+const result_5 = copyValue([1, 2, 3]);
+const result_6 = copyValue(["a", "b", "c"]);
+```
+
+- 예제 3
+
+```ts
+// 입력값 반환하기
+const returnSame = (input: any) => {
+  return input;
+};
+
+const result_1: any = returnSame(1);
+const result_2: any = returnSame("안녕");
+const result_3: any = returnSame(true);
+```
+
+- 제네릭
+
+```ts
+// 입력값 반환하기
+const returnSame = <T>(input: T): T => {
+  return input;
+};
+
+const result_1: 1 = returnSame(1);
+const result_2: "안녕" = returnSame("안녕");
+const result_3: boolean = returnSame(true);
+```
+
+## 함수에서 활용되는 제네릭 살펴보기
+
+```ts
+const getFirst = <T>(arr: T[]): T => {
+  return arr[0];
+};
+
+let result_1: number = getFirst([1, 2, 3]);
+let result_2: string = getFirst(["a", "b", "c"]);
+let result_3: number | string | boolean = getFirst([3, "b", true]);
+```
+
+```ts
+function reverseArr<T>(arr: T[]): T[] {
+  return [...arr].reverse();
+}
+
+let result_1: number[] = reverseArr([1, 2, 3]);
+let result_2: string[] = reverseArr(["a", "b"]);
+let result_3: (string | number)[] = reverseArr(["a", 3]);
+```
+
+```ts
+function mergeArr<T>(arr1: T[], arr2: T[]): T[] {
+  return [...arr1, ...arr2];
+}
+let result: number[] = mergeArr([1, 2, 3], [6, 7, 3]);
+```
