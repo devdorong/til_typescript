@@ -1,0 +1,25 @@
+import React from "react";
+// window
+interface SignUpData {
+  username: string;
+  password: string;
+  email: string;
+  agree: boolean;
+}
+function SignUpForm() {
+  // ts
+  const [formData, setFormData] = useState({});
+  // tsx
+  return (
+    <form>
+      <h2>회원가입폼</h2>
+      <input type="text" name="username" />
+      <input type="password" name="userpass" />
+      <input type="email" name="useremail" />
+      <input type="checkbox" name="useragree" />
+      <button type="submit">가입하기</button>
+    </form>
+  );
+}
+
+export default SignUpForm;
